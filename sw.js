@@ -1,10 +1,12 @@
-const CACHE = "lumecut-v1";
+const CACHE = "lumecut-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.mjs",
   "./editor-core.mjs",
+  "./project-backup.mjs",
+  "./local-profiles.mjs",
   "./media-store.mjs",
   "./renderer.mjs",
   "./export-engine.mjs",

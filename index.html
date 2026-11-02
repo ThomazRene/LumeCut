@@ -22,6 +22,7 @@
         </div>
         <input id="project-name" class="project-name" value="Meu vídeo" aria-label="Nome do projeto" />
         <div class="top-actions">
+          <button id="show-projects" class="secondary-button">Projetos</button>
           <button id="undo" class="icon-button" title="Desfazer" aria-label="Desfazer">↶</button>
           <button id="redo" class="icon-button" title="Refazer" aria-label="Refazer">↷</button>
           <button id="save-project" class="secondary-button">Salvar</button>
@@ -97,7 +98,36 @@
       <input id="audio-input" type="file" accept="audio/*" multiple hidden />
       <input id="ai-reference-input" type="file" accept="video/*,image/*" multiple hidden />
       <input id="project-input" type="file" accept=".lumecut,application/json" hidden />
+      <input id="backup-input" type="file" accept=".lumebackup,application/octet-stream" hidden />
     </div>
+    <section id="projects-home" class="projects-home" aria-label="Meus projetos" hidden>
+      <div class="projects-card">
+        <span class="brand-mark">L</span>
+        <h1>Meus projetos</h1>
+        <p id="profile-name"></p>
+        <p>Os projetos ficam salvos neste navegador ou aplicativo, neste aparelho.</p>
+        <button id="start-project" class="primary-button">＋ Iniciar novo projeto</button>
+        <button id="restore-backup" class="secondary-button">Restaurar backup</button>
+        <div id="projects-list" class="projects-list"></div>
+        <button id="return-editor" class="secondary-button">Voltar ao editor</button>
+        <button id="profile-logout" class="secondary-button">Trocar de perfil</button>
+      </div>
+    </section>
+    <section id="profile-screen" class="projects-home profile-screen" aria-label="Perfil local">
+      <div class="projects-card">
+        <span class="brand-mark">L</span>
+        <h1>Bem-vindo ao LumeCut</h1>
+        <p>Crie um perfil ou entre em um perfil deste aparelho.</p>
+        <form id="profile-form">
+          <label>Nome de usuário <input id="profile-username" class="text-input" type="text" minlength="2" maxlength="40" autocomplete="username" required></label>
+          <label>Senha <input id="profile-password" class="text-input" type="password" minlength="8" autocomplete="current-password" required></label>
+          <p id="profile-error" role="alert"></p>
+          <button class="primary-button" type="submit">Entrar</button>
+          <button id="profile-create" class="secondary-button" type="button">Criar perfil</button>
+        </form>
+        <p>Os perfis são locais e não sincronizam. Guarde sua senha: não há recuperação. Os dados não são criptografados e a senha protege apenas contra acesso casual.</p>
+      </div>
+    </section>
     <script type="module" src="./app.mjs"></script>
   </body>
 </html>

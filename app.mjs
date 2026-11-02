@@ -26,6 +26,8 @@ import { CanvasRenderer } from "./renderer.mjs";
 import { exportProject } from "./export-engine.mjs";
 import { applySmartEdit, smartSuggestions } from "./smart-assistant.mjs";
 import { createProceduralTrack, estimateBpm, freeTracks } from "./music-library.mjs";
+import { createProjectBackup, restoreProjectBackup } from "./project-backup.mjs";
+import { authenticateProfile, createProfile, finishLegacyMigration, listProfiles } from "./local-profiles.mjs";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -81,6 +83,7 @@ let lastFrameAt = 0;
 let renderVersion = 0;
 let toastTimer = null;
 let saveTimer = null;
+let creatingProjectFromHome = false;
 let exportQuality = "1080p";
 let exportDestination = "share";
 let exportExperimental = false;
@@ -368,7 +371,7 @@ function renderAudioInspector() {
     <h3>Link direto autorizado</h3>
     <div class="field"><input id="music-url" type="text" placeholder="https://site.com/musica.mp3"></div>
     <button class="secondary-button" data-action="add-audio-url">Adicionar link .mp3/.wav</button>
-    <p class="inspector-description" style="margin-top:8px">Links do YouTube não são extraídos. Baixe faixas permitidas pela Biblioteca de Áudio do YouTube ou pelo autor e importe o arquivo.</p>
+    <p class="inspector-description" style="margin-top:8px">Links do YouTube não são extraídos. Se o autor permitir baixar e usar a música, obtenha o arquivo por uma fonte autorizada e toque em Importar áudio. O app não consegue verificar automaticamente os direitos de músicas importadas.</p>
     <div class="item-list" style="margin-top:12px">${list || '<div class="empty-state">Nenhuma faixa de áudio.</div>'}</div>
     ${track ? `<h3>Faixa selecionada</h3>
       ${slider({ label: "Volume", value: Math.round(track.volume * 100), min: 0, max: 200, data: 'data-audio-special="volume"', suffix: "%" })}
@@ -402,6 +405,7 @@ function renderFormatInspector() {
     <h3>Projeto</h3>
     <div class="button-grid">
       <button class="secondary-button" data-action="download-project">Baixar projeto</button>
+      <button class="secondary-button" data-action="backup-project">Backup com mídias</button>
       <button class="secondary-button" data-action="open-project">Abrir projeto</button>
       <button class="danger-button" data-action="new-project">Novo projeto</button>
     </div>`;
@@ -555,6 +559,11 @@ async function importMedia(files) {
 
 async function importAudio(files) {
   if (!files.length) return;
+  if (!confirm("Não é possível verificar automaticamente os direitos dessas músicas. Você tem permissão ou licença para usá-las?\n\nEscolha Cancelar se não tiver certeza: nenhuma faixa será adicionada.")) {
+    elements.audioInput.value = "";
+    toast("Importação cancelada: nenhuma música foi adicionada.");
+    return;
+  }
   let next = project;
   try {
     for (const file of files) {
@@ -826,10 +835,23 @@ async function handleAction(action) {
     await runSmartAssistant();
   } else if (action === "download-project") {
     downloadBlob(new Blob([serializeProject(project)], { type: "application/json" }), `${safeName()}.lumecut`);
+  } else if (action === "backup-project") {
+    try {
+      toast("Preparando backup com mídias…");
+      const backup = await createProjectBackup(project, mediaStore);
+      downloadBlob(backup, `${safeName()}.lumebackup`);
+      toast("Backup preparado. Guarde o arquivo em local seguro.");
+    } catch (error) { toast(error.message || "Não foi possível criar o backup.", true); }
   } else if (action === "open-project") {
     elements.projectInput.click();
   } else if (action === "new-project") {
-    if (confirm("Criar um projeto novo? O projeto atual continuará salvo no arquivo se você já o baixou.")) replaceProject(createProject());
+    if (confirm("Criar um projeto novo? O projeto atual será mantido neste aparelho.")) {
+      try {
+        clearTimeout(saveTimer);
+        await mediaStore.saveProject(project);
+        replaceProject(createProject());
+      } catch { toast("Não foi possível salvar o projeto atual.", true); }
+    }
   } else if (action === "export") {
     runExport();
   }
@@ -928,7 +950,23 @@ $("#tool-tabs").addEventListener("click", (event) => {
   if (button) selectTool(button.dataset.tool);
 });
 
-elements.mediaInput.addEventListener("change", () => importMedia([...elements.mediaInput.files]));
+elements.mediaInput.addEventListener("change", async () => {
+  const files = [...elements.mediaInput.files];
+  if (creatingProjectFromHome) {
+    creatingProjectFromHome = false;
+    if (!files.length) return;
+    try {
+      clearTimeout(saveTimer);
+      await mediaStore.saveProject(project);
+      replaceProject(createProject());
+      $("#projects-home").hidden = true;
+    } catch {
+      toast("Não foi possível salvar o projeto atual.", true);
+      return;
+    }
+  }
+  await importMedia(files);
+});
 elements.audioInput.addEventListener("change", () => importAudio([...elements.audioInput.files]));
 elements.aiReferenceInput.addEventListener("change", () => {
   aiReferenceFiles = [...elements.aiReferenceInput.files];
@@ -980,6 +1018,96 @@ document.addEventListener("visibilitychange", () => {
 
 window.addEventListener("beforeunload", () => mediaStore.dispose());
 window.addEventListener("resize", renderTimeline);
+
+async function showProjects() {
+  try {
+    clearTimeout(saveTimer);
+    await mediaStore.saveProject(project);
+    const projects = await mediaStore.listProjects();
+    const list = $("#projects-list");
+    list.innerHTML = projects.map((item, index) => `<button data-project-index="${index}"><strong>${escapeHtml(item.name)}</strong><small>${item.clips?.length || 0} clipes · salvo neste aparelho</small></button>`).join("") || "<p>Nenhum projeto salvo ainda.</p>";
+    list.onclick = async (event) => {
+      const button = event.target.closest("[data-project-index]");
+      if (!button) return;
+      try {
+        clearTimeout(saveTimer);
+        await mediaStore.saveProject(project);
+        replaceProject(projects[Number(button.dataset.projectIndex)]);
+        $("#projects-home").hidden = true;
+      } catch { toast("Não foi possível abrir o projeto.", true); }
+    };
+    $("#projects-home").hidden = false;
+  } catch { toast("Não foi possível carregar os projetos salvos.", true); }
+}
+
+$("#show-projects").addEventListener("click", showProjects);
+$("#return-editor").addEventListener("click", () => { $("#projects-home").hidden = true; });
+$("#start-project").addEventListener("click", () => {
+  creatingProjectFromHome = true;
+  elements.mediaInput.value = "";
+  elements.mediaInput.click();
+});
+$("#restore-backup").addEventListener("click", () => $("#backup-input").click());
+$("#backup-input").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    toast("Restaurando backup…");
+    clearTimeout(saveTimer);
+    await mediaStore.saveProject(project);
+    const restored = await restoreProjectBackup(file, mediaStore);
+    replaceProject(restored);
+    $("#projects-home").hidden = true;
+    toast("Backup restaurado como novo projeto.");
+  } catch (error) { toast(error.message || "Não foi possível restaurar o backup.", true); }
+  finally { event.target.value = ""; }
+});
+elements.mediaInput.addEventListener("cancel", () => { creatingProjectFromHome = false; });
+
+async function enterProfile(create) {
+  const error = $("#profile-error");
+  const username = $("#profile-username").value;
+  const password = $("#profile-password").value;
+  error.textContent = "";
+  const buttons = $("#profile-form").querySelectorAll("button");
+  buttons.forEach((button) => { button.disabled = true; });
+  try {
+    const firstProfile = create && listProfiles().length === 0;
+    const profile = create ? await createProfile(username, password, firstProfile) : await authenticateProfile(username, password);
+    let legacyProjects = [];
+    let legacyCurrent = null;
+    if (profile.migrateLegacy) {
+      mediaStore.profileId = null;
+      legacyProjects = await mediaStore.listProjects();
+      legacyCurrent = await mediaStore.loadProject();
+    }
+    mediaStore.profileId = profile.id;
+    if (profile.migrateLegacy) {
+      for (const oldProject of legacyProjects) await mediaStore.saveProject(oldProject);
+      if (legacyCurrent) await mediaStore.saveProject(legacyCurrent);
+      finishLegacyMigration(profile.id);
+    }
+    const saved = await mediaStore.loadProject();
+    replaceProject(saved || createProject());
+    $("#profile-name").textContent = `Perfil: ${profile.name}`;
+    $("#profile-password").value = "";
+    await showProjects();
+    $("#profile-screen").hidden = true;
+  } catch (failure) {
+    error.textContent = failure.message || "Não foi possível abrir o perfil.";
+  } finally { buttons.forEach((button) => { button.disabled = false; }); }
+}
+$("#profile-form").addEventListener("submit", (event) => { event.preventDefault(); enterProfile(false); });
+$("#profile-create").addEventListener("click", () => enterProfile(true));
+$("#profile-logout").addEventListener("click", async () => {
+  try {
+    clearTimeout(saveTimer);
+    await mediaStore.saveProject(project);
+    pause();
+    $("#profile-password").value = "";
+    $("#profile-screen").hidden = false;
+  } catch { toast("Não foi possível salvar antes de sair do perfil.", true); }
+});
 
 async function boot() {
   try {

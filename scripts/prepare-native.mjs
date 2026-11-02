@@ -10,6 +10,8 @@ const files = [
   "styles.css",
   "app.mjs",
   "editor-core.mjs",
+  "project-backup.mjs",
+  "local-profiles.mjs",
   "media-store.mjs",
   "renderer.mjs",
   "export-engine.mjs",

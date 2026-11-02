@@ -22,6 +22,17 @@ body { min-height: 100dvh; overflow: hidden; }
 button, input, select { font: inherit; }
 button { color: inherit; }
 [hidden] { display: none !important; }
+.projects-home { position: fixed; inset: 0; z-index: 100; overflow-y: auto; padding: max(28px, env(safe-area-inset-top)) 20px 40px; background: radial-gradient(circle at 50% 0, #28144d, #09090d 60%); }
+.projects-card { width: min(100%, 620px); margin: 0 auto; }
+.projects-card h1 { margin-bottom: 4px; }
+.projects-card p { color: var(--muted); line-height: 1.5; }
+.projects-list { display: grid; gap: 8px; margin: 22px 0; }
+.projects-list button { text-align: left; width: 100%; padding: 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+.projects-list small { display: block; color: var(--muted); margin-top: 3px; }
+.profile-screen { z-index: 110; }
+.profile-screen form { display: grid; gap: 12px; }
+.profile-screen label { display: grid; gap: 6px; }
+.profile-screen #profile-error { color: #fda4af; margin: 0; }
 
 .app-shell { height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr); background: radial-gradient(circle at 50% -20%, #25154a 0, transparent 32%), var(--bg); }
 .topbar { min-height: 66px; display: flex; align-items: center; gap: 18px; padding: max(10px, env(safe-area-inset-top)) 18px 10px; border-bottom: 1px solid var(--line); background: rgba(9,9,13,.86); backdrop-filter: blur(22px); z-index: 10; }
@@ -174,7 +185,8 @@ input[type="color"] { width: 100%; height: 40px; padding: 4px; border: 1px solid
 }
 
 @media (max-width: 420px) {
-  .quick-export { padding-inline: 11px; }
+  #quick-export, #show-projects { padding-inline: 9px; font-size: 12px; }
+  .project-name { min-width: 0; }
   .time-display { min-width: 124px; font-size: 11px; }
   .preview-panel { height: 50dvh; min-height: 370px; }
   .preview-stage { max-height: calc(50dvh - 58px); }

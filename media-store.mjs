@@ -63,6 +63,7 @@ export class MediaStore {
     this.database = openDatabase();
     this.memory = new Map();
     this.urls = new Map();
+    this.profileId = null;
   }
 
   async addFile(file, metadata = null) {
@@ -108,24 +109,46 @@ export class MediaStore {
   }
 
   async saveProject(project) {
+    const prefix = this.profileId ? `profile:${this.profileId}:` : "";
     const db = await this.database;
     if (!db) {
-      localStorage.setItem("lumecut-project", JSON.stringify(project));
+      localStorage.setItem(`lumecut-${prefix}project`, JSON.stringify(project));
+      localStorage.setItem(`lumecut-${prefix}project:${project.id}`, JSON.stringify(project));
       return;
     }
     const transaction = db.transaction("projects", "readwrite");
-    transaction.objectStore("projects").put({ id: "current", project });
+    transaction.objectStore("projects").put({ id: `${prefix}current`, project });
+    transaction.objectStore("projects").put({ id: `${prefix}project:${project.id}`, project });
     await transactionDone(transaction);
   }
 
-  async loadProject() {
+  async listProjects() {
+    const prefix = this.profileId ? `profile:${this.profileId}:` : "";
     const db = await this.database;
     if (!db) {
-      const raw = localStorage.getItem("lumecut-project");
+      const projects = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(`lumecut-${prefix}project:`)) {
+          try { projects.push(JSON.parse(localStorage.getItem(key))); } catch { /* ignora item inválido */ }
+        }
+      }
+      return projects;
+    }
+    const tx = db.transaction("projects", "readonly");
+    const entries = await requestResult(tx.objectStore("projects").getAll());
+    return entries.filter((entry) => entry.id.startsWith(`${prefix}project:`)).map((entry) => entry.project);
+  }
+
+  async loadProject() {
+    const prefix = this.profileId ? `profile:${this.profileId}:` : "";
+    const db = await this.database;
+    if (!db) {
+      const raw = localStorage.getItem(`lumecut-${prefix}project`);
       return raw ? JSON.parse(raw) : null;
     }
     const transaction = db.transaction("projects", "readonly");
-    const result = await requestResult(transaction.objectStore("projects").get("current"));
+    const result = await requestResult(transaction.objectStore("projects").get(`${prefix}current`));
     return result?.project ?? null;
   }
 
