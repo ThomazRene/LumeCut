@@ -28,6 +28,7 @@ import { applySmartEdit, smartSuggestions } from "./smart-assistant.mjs";
 import { createProceduralTrack, estimateBpm, freeTracks } from "./music-library.mjs";
 import { createProjectBackup, restoreProjectBackup } from "./project-backup.mjs";
 import { authenticateProfile, createProfile, finishLegacyMigration, listProfiles } from "./local-profiles.mjs";
+import { APP_VERSION, DOWNLOAD_PAGE, checkForUpdate } from "./update-check.mjs";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -1108,6 +1109,30 @@ $("#profile-logout").addEventListener("click", async () => {
     $("#profile-screen").hidden = false;
   } catch { toast("Não foi possível salvar antes de sair do perfil.", true); }
 });
+
+$$('[data-check-update]').forEach((button) => button.addEventListener("click", async () => {
+  const status = button.closest(".update-area").querySelector(".update-status");
+  button.disabled = true;
+  status.textContent = "Verificando atualização…";
+  try {
+    const result = await checkForUpdate();
+    if (!result.available) {
+      status.textContent = `Você está usando a versão ${APP_VERSION}; nenhuma versão mais recente foi encontrada.`;
+    } else if (!globalThis.Capacitor?.isNativePlatform?.()) {
+      status.textContent = `A versão ${result.version} está disponível. Atualize a página para carregar a versão mais recente.`;
+    } else {
+      status.textContent = `Versão ${result.version} disponível. Baixe o APK e abra o arquivo para instalar por cima da versão atual. `;
+      const link = document.createElement("a");
+      link.href = DOWNLOAD_PAGE;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Abrir página de download";
+      status.append(link);
+    }
+  } catch {
+    status.textContent = "Não foi possível verificar agora. Confira sua internet e tente novamente.";
+  } finally { button.disabled = false; }
+}));
 
 async function boot() {
   try {

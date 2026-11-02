@@ -10,7 +10,8 @@
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #09090d; color: #f6f4ff; font: 16px/1.55 system-ui, sans-serif; }
     main { width: min(100%, 480px); text-align: center; }
-    .logo { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: #a978ff; color: #15101e; font-size: 36px; font-weight: 800; }
+    .logo { position: relative; display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: #a978ff; color: #15101e; font-size: 36px; font-weight: 800; }
+    .logo small { position: absolute; top: 4px; font-size: 7px; line-height: 1; font-weight: 700; }
     h1 { margin: 20px 0 8px; font-size: clamp(30px, 8vw, 44px); line-height: 1.1; }
     p { color: #c5c1d3; }
     .button { display: block; padding: 15px 20px; margin: 20px 0 12px; border-radius: 14px; background: #a978ff; color: #15101e; font-weight: 750; text-decoration: none; }
@@ -21,7 +22,7 @@
 </head>
 <body>
   <main>
-    <span class="logo" aria-hidden="true">L</span>
+    <span class="logo" aria-label="LumeCut versão 2.0"><small>versão 2.0</small>L</span>
     <h1>LumeCut</h1>
     <p>Editor de vídeo gratuito para criar e compartilhar suas ideias.</p>
     <a class="button" href="https://github.com/ThomazRene/LumeCut/releases/download/android-latest/LumeCut-Android-universal-arm32-arm64.apk">⬇ Baixar para Android (APK)</a>

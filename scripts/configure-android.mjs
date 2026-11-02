@@ -26,6 +26,11 @@ if (!manifest.includes("android:largeHeap")) {
 await writeFile(manifestPath, manifest, "utf8");
 
 let gradle = await readFile(gradlePath, "utf8");
+if (!/versionCode\s+\d+/.test(gradle) || !/versionName\s+["'][^"']+["']/.test(gradle)) {
+  throw new Error("Não foi possível localizar a versão do Android no Gradle.");
+}
+gradle = gradle.replace(/versionCode\s+\d+/, "versionCode 2");
+gradle = gradle.replace(/versionName\s+["'][^"']+["']/, 'versionName "2.0"');
 if (!gradle.includes("ANDROID_KEYSTORE_PATH")) {
   gradle = gradle.replace(
     "    buildTypes {",

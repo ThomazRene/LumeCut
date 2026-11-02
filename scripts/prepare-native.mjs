@@ -12,6 +12,8 @@ const files = [
   "editor-core.mjs",
   "project-backup.mjs",
   "local-profiles.mjs",
+  "update-check.mjs",
+  "version.json",
   "media-store.mjs",
   "renderer.mjs",
   "export-engine.mjs",

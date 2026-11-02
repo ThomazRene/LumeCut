@@ -17,7 +17,7 @@
     <div id="app" class="app-shell">
       <header class="topbar">
         <div class="brand" aria-label="LumeCut">
-          <span class="brand-mark">L</span>
+          <span class="brand-mark"><small class="version-badge">versão 2.0</small>L</span>
           <div><strong>LumeCut</strong><small>editor gratuito</small></div>
         </div>
         <input id="project-name" class="project-name" value="Meu vídeo" aria-label="Nome do projeto" />
@@ -102,7 +102,7 @@
     </div>
     <section id="projects-home" class="projects-home" aria-label="Meus projetos" hidden>
       <div class="projects-card">
-        <span class="brand-mark">L</span>
+        <span class="brand-mark"><small class="version-badge">versão 2.0</small>L</span>
         <h1>Meus projetos</h1>
         <p id="profile-name"></p>
         <p>Os projetos ficam salvos neste navegador ou aplicativo, neste aparelho.</p>
@@ -111,11 +111,12 @@
         <div id="projects-list" class="projects-list"></div>
         <button id="return-editor" class="secondary-button">Voltar ao editor</button>
         <button id="profile-logout" class="secondary-button">Trocar de perfil</button>
+        <div class="update-area"><button class="secondary-button" data-check-update>Verificar atualização</button><p class="update-status" role="status"></p></div>
       </div>
     </section>
     <section id="profile-screen" class="projects-home profile-screen" aria-label="Perfil local">
       <div class="projects-card">
-        <span class="brand-mark">L</span>
+        <span class="brand-mark"><small class="version-badge">versão 2.0</small>L</span>
         <h1>Bem-vindo ao LumeCut</h1>
         <p>Crie um perfil ou entre em um perfil deste aparelho.</p>
         <form id="profile-form">
@@ -126,6 +127,7 @@
           <button id="profile-create" class="secondary-button" type="button">Criar perfil</button>
         </form>
         <p>Os perfis são locais e não sincronizam. Guarde sua senha: não há recuperação. Os dados não são criptografados e a senha protege apenas contra acesso casual.</p>
+        <div class="update-area"><button class="secondary-button" data-check-update>Verificar atualização</button><p class="update-status" role="status"></p></div>
       </div>
     </section>
     <script type="module" src="./app.mjs"></script>
