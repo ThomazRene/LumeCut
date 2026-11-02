@@ -94,6 +94,7 @@ const LOW_END_DEVICE = (navigator.deviceMemory && navigator.deviceMemory <= 4)
 const PREVIEW_SHORT_EDGE = LOW_END_DEVICE ? 360 : 540;
 const PREVIEW_FRAME_INTERVAL = 1000 / (LOW_END_DEVICE ? 24 : 30);
 let previewRenderPending = false;
+let previewRenderQueued = false;
 let lastPreviewRenderAt = 0;
 
 const selectedClip = () => project.clips.find((clip) => clip.id === selectedClipId) ?? null;
@@ -167,8 +168,11 @@ function replaceProject(nextProject) {
 
 async function renderPreview(force = false) {
   const now = performance.now();
-  if (!force && playing && (previewRenderPending || now - lastPreviewRenderAt < PREVIEW_FRAME_INTERVAL)) return;
-  if (previewRenderPending && !force) return;
+  if (previewRenderPending) {
+    if (force || !playing) previewRenderQueued = true;
+    return;
+  }
+  if (!force && playing && now - lastPreviewRenderAt < PREVIEW_FRAME_INTERVAL) return;
   previewRenderPending = true;
   lastPreviewRenderAt = now;
   const version = ++renderVersion;
@@ -180,6 +184,10 @@ async function renderPreview(force = false) {
     console.error(error);
   } finally {
     previewRenderPending = false;
+    if (previewRenderQueued) {
+      previewRenderQueued = false;
+      renderPreview(true);
+    }
   }
 }
 
@@ -407,7 +415,7 @@ function renderExportInspector() {
   return inspectorHeader("Exportar", "O vídeo é processado neste aparelho; seus arquivos não são enviados para servidores.") + `
     <div class="export-card"><strong>${escapeHtml(project.name)}</strong><small>${project.aspectRatio} · ${project.fps} fps · ${formatTime(duration)}<br>Sem assinatura e sem marca-d’água.</small></div>
     <div class="field"><label>Resolução</label><div class="button-grid three export-options">
-      ${resolutions.map((quality) => `<button data-quality="${quality}" class="secondary-button ${exportQuality === quality ? "active" : ""}">${quality}${quality === "8K" ? " · EXP" : ""}</button>`).join("")}
+      ${resolutions.map((quality) => `<button data-quality="${quality}" class="secondary-button ${exportQuality === quality ? "active" : ""}">${quality === "1440p" ? "2K (1440p)" : quality}${quality === "8K" ? " · EXP" : ""}</button>`).join("")}
     </div></div>
     <div class="field"><label>Quadros por segundo</label><div class="button-grid three export-options">
       ${frameRates.map((fps) => `<button data-fps="${fps}" class="secondary-button ${project.fps === fps ? "active" : ""}">${fps} fps${fps > 60 ? " · EXP" : ""}</button>`).join("")}
@@ -418,11 +426,11 @@ function renderExportInspector() {
     </div></div>
     <div class="export-capability ${capability.safe ? "safe" : "warning"}">
       <strong>${capability.safe ? "✓ Configuração recomendada" : "⚠ Configuração extrema"}</strong>
-      <small>Recomendado neste aparelho: até ${capability.recommended}. Estimativa do arquivo: ${estimatedExportSize()} MB.</small>
+      <small>Estimativa para este aparelho: até ${capability.recommended}; não garante compatibilidade. Estimativa do arquivo: ${estimatedExportSize()} MB.</small>
     </div>
     ${capability.safe ? "" : `<label class="switch-row experimental-switch">Permitir modo experimental <input type="checkbox" ${exportExperimental ? "checked" : ""} data-export-experimental></label>`}
     <button class="primary-button" style="width:100%;height:48px" data-action="export" ${project.clips.length && capability.allowed ? "" : "disabled"}>Exportar ${exportQuality} · ${project.fps} fps</button>
-    <p class="inspector-description" style="margin-top:12px">4K/120, 8K e 144 fps dependem do codificador e da memória do celular. O bloqueio preventivo evita travamentos; o modo experimental permite tentar quando você souber que o aparelho suporta.</p>`;
+    <p class="inspector-description" style="margin-top:12px">A resolução e os fps reais dependem do codificador, da memória e do desempenho do aparelho. Em especial, 120 fps e opções superiores são experimentais e podem gerar menos quadros ou falhar. O modo experimental permite tentar configurações acima da estimativa.</p>`;
 }
 
 function renderInspector() {
@@ -499,7 +507,7 @@ function playbackTick(timestamp) {
     return;
   }
   updateTimeUi();
-  renderPreview(true);
+  renderPreview();
   updateBackgroundAudio();
   animationFrame = requestAnimationFrame(playbackTick);
 }
