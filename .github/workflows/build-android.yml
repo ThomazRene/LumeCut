@@ -48,10 +48,15 @@ jobs:
         env:
           ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/lumecut-release.p12
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: lumecut
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         shell: bash
         run: |
+          export LC_ALL=C
+          export ANDROID_KEY_ALIAS="$(keytool -list -v -storetype PKCS12 -keystore "$ANDROID_KEYSTORE_PATH" -storepass:env ANDROID_KEYSTORE_PASSWORD | sed -n 's/^Alias name: //p' | head -n 1)"
+          if [ -z "$ANDROID_KEY_ALIAS" ]; then
+            echo '::error::Não foi possível identificar a chave de assinatura.'
+            exit 1
+          fi
           set +e
           ./gradlew assembleRelease > "$RUNNER_TEMP/lumecut-gradle.log" 2>&1
           result=$?
