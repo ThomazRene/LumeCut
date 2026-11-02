@@ -1,0 +1,27 @@
+{
+  "name": "lumecut",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Editor de vídeo mobile-first, gratuito e original.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "native:prepare": "node scripts/prepare-native.mjs",
+    "native:add:android": "npm run native:prepare && npx cap add android",
+    "native:configure:android": "node scripts/configure-android.mjs",
+    "native:add:ios": "npm run native:prepare && npx cap add ios",
+    "native:sync": "npm run native:prepare && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.4",
+    "@capacitor/core": "^8.5.4",
+    "@capacitor/ios": "^8.5.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

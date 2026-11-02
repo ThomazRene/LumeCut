@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#09090d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="LumeCut — editor de vídeo gratuito e privativo." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>LumeCut</title>
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="topbar">
+        <div class="brand" aria-label="LumeCut">
+          <span class="brand-mark">L</span>
+          <div><strong>LumeCut</strong><small>editor gratuito</small></div>
+        </div>
+        <input id="project-name" class="project-name" value="Meu vídeo" aria-label="Nome do projeto" />
+        <div class="top-actions">
+          <button id="undo" class="icon-button" title="Desfazer" aria-label="Desfazer">↶</button>
+          <button id="redo" class="icon-button" title="Refazer" aria-label="Refazer">↷</button>
+          <button id="save-project" class="secondary-button">Salvar</button>
+          <button id="quick-export" class="primary-button">Exportar</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="preview-panel">
+          <div id="preview-stage" class="preview-stage ratio-9-16">
+            <canvas id="preview" width="540" height="960" aria-label="Prévia do vídeo"></canvas>
+            <button id="empty-import" class="empty-import">＋ Adicionar mídia</button>
+          </div>
+          <div class="transport">
+            <button id="previous" class="icon-button" title="Voltar 1 segundo">−1s</button>
+            <button id="play" class="play-button" aria-label="Reproduzir">▶</button>
+            <button id="next" class="icon-button" title="Avançar 1 segundo">+1s</button>
+            <span id="time-display" class="time-display">00:00.0 / 00:00.0</span>
+            <button id="fullscreen" class="icon-button" title="Tela cheia">⛶</button>
+          </div>
+        </section>
+
+        <section class="timeline-panel">
+          <div class="timeline-head">
+            <div>
+              <strong>Linha do tempo</strong>
+              <small id="timeline-summary">0 clipes</small>
+            </div>
+            <div class="timeline-actions">
+              <button id="add-media" class="secondary-button">＋ Vídeo/foto</button>
+              <button id="split" class="secondary-button">✂ Dividir</button>
+            </div>
+          </div>
+          <div id="timeline-scroll" class="timeline-scroll">
+            <div id="timeline-content" class="timeline-content">
+              <div id="time-ruler" class="time-ruler"></div>
+              <div id="video-track" class="track video-track"><span class="track-label">VÍDEO</span></div>
+              <div id="overlay-track" class="track overlay-track"><span class="track-label">TEXTO</span></div>
+              <div id="audio-track" class="track audio-track"><span class="track-label">ÁUDIO</span></div>
+              <div id="playhead" class="playhead"><span></span></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="tools-panel">
+          <nav id="tool-tabs" class="tool-tabs" aria-label="Ferramentas">
+            <button class="tool-tab active" data-tool="edit">Editar</button>
+            <button class="tool-tab" data-tool="adjust">Ajustar</button>
+            <button class="tool-tab" data-tool="effects">Efeitos</button>
+            <button class="tool-tab" data-tool="text">Texto</button>
+            <button class="tool-tab" data-tool="stickers">Stickers</button>
+            <button class="tool-tab" data-tool="audio">Áudio</button>
+            <button class="tool-tab ai-tab" data-tool="ai">✦ IA</button>
+            <button class="tool-tab" data-tool="format">Formato</button>
+            <button class="tool-tab" data-tool="export">Exportar</button>
+          </nav>
+          <div id="inspector" class="inspector"></div>
+        </aside>
+      </main>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <div id="export-modal" class="modal" hidden>
+        <div class="modal-card">
+          <div class="export-orbit"><span></span></div>
+          <h2>Exportando seu vídeo</h2>
+          <p id="export-status">Preparando…</p>
+          <progress id="export-progress" max="1" value="0"></progress>
+          <button id="cancel-export" class="secondary-button">Cancelar</button>
+        </div>
+      </div>
+
+      <input id="media-input" type="file" accept="video/*,image/*" multiple hidden />
+      <input id="audio-input" type="file" accept="audio/*" multiple hidden />
+      <input id="ai-reference-input" type="file" accept="video/*,image/*" multiple hidden />
+      <input id="project-input" type="file" accept=".lumecut,application/json" hidden />
+    </div>
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>

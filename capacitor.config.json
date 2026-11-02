@@ -1,0 +1,18 @@
+{
+  "appId": "app.lumecut.editor",
+  "appName": "LumeCut",
+  "webDir": "www",
+  "backgroundColor": "#09090d",
+  "android": {
+    "backgroundColor": "#09090d",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false,
+    "zoomEnabled": false,
+    "minWebViewVersion": 80
+  },
+  "ios": {
+    "backgroundColor": "#09090d",
+    "contentInset": "automatic",
+    "preferredContentMode": "mobile"
+  }
+}

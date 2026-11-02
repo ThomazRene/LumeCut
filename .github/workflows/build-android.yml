@@ -1,0 +1,71 @@
+name: Gerar APK Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Preparar projeto Android
+        run: |
+          npm run native:prepare
+          npx cap add android
+          npm run native:configure:android
+
+      - name: Restaurar assinatura segura
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > lumecut-release.p12
+
+      - name: Compilar APK release otimizado
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/lumecut-release.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: lumecut
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Nomear APK universal 32/64 bits
+        run: cp android/app/build/outputs/apk/release/app-release.apk LumeCut-Android-universal-arm32-arm64.apk
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LumeCut-Android-universal
+          path: LumeCut-Android-universal-arm32-arm64.apk
+          if-no-files-found: error
+
+      - name: Disponibilizar download público
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view android-latest >/dev/null 2>&1 || gh release create android-latest --title "LumeCut para Android" --notes "APK universal para celulares Android ARM de 32 e 64 bits. Sem anúncios e sem marca-d'água."
+          gh release upload android-latest LumeCut-Android-universal-arm32-arm64.apk --clobber

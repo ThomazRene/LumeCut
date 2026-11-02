@@ -1,0 +1,24 @@
+{
+  "name": "LumeCut — Editor de vídeo",
+  "short_name": "LumeCut",
+  "description": "Editor de vídeo gratuito, offline e privativo.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#09090d",
+  "theme_color": "#09090d",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": { "application/json": [".lumecut"] }
+    }
+  ]
+}
