@@ -50,7 +50,18 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: lumecut
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        run: ./gradlew assembleRelease
+        shell: bash
+        run: |
+          set +e
+          ./gradlew assembleRelease > "$RUNNER_TEMP/lumecut-gradle.log" 2>&1
+          result=$?
+          tail -n 80 "$RUNNER_TEMP/lumecut-gradle.log"
+          if [ "$result" -ne 0 ]; then
+            sed -n '/What went wrong:/,+8p' "$RUNNER_TEMP/lumecut-gradle.log" | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+          fi
+          exit "$result"
 
       - name: Nomear APK universal 32/64 bits
         run: cp android/app/build/outputs/apk/release/app-release.apk LumeCut-Android-universal-arm32-arm64.apk
